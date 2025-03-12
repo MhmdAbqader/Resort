@@ -1,3 +1,10 @@
-﻿@{
+﻿@using Resort.Application.Utility
+
+@if (User.IsInRole(SD.AdminRole))
+{
+    Layout = "_LayoutAdmin";
+}
+else 
+{
     Layout = "_Layout";
 }

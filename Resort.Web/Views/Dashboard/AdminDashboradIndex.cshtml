@@ -1,0 +1,277 @@
+﻿<div class="container-fluid">
+    <div class="row">
+        <div class="page-title-box d-flex align-items-center justify-content-between">
+            <h4 class="mb-0">Dashboard</h4>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6 col-xl-4 mt-2">
+            <div class="card">
+                <div class="card-body">
+                    <div class="float-end mt-2">
+                        <div id="totalBookingsRadialChart" data-colors='["--bs-success"]'></div>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0">Total Bookings</p>
+                        <h4 class="my-1">
+                            <span id="spanTotalBookingCount">XX</span>
+                        </h4>
+                    </div>
+                    <p class="text-muted mt-3 mb-0" id="sectionBookingCount"></p>
+
+                    <div class="justify-content-center text-center chart-spinner" style="display:none">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-4 mt-2">
+            <div class="card">
+                <div class="card-body">
+                    <div class="float-end mt-2">
+                        <div id="totalUserRadialChart" data-colors='["--bs-warning"]'></div>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0">Total Users</p>
+                        <h4 class="my-1">
+                            <span id="spanTotalUserCount">XX</span>
+                        </h4>
+                    </div>
+                    <p class="text-muted mt-3 mb-0" id="sectionUserCount"></p>
+
+                    <div class="justify-content-center text-center chart-spinner" style="display:none">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-4 mt-2">
+            <div class="card">
+                <div class="card-body">
+                    <div class="float-end mt-2">
+                        <div id="totalRevenueRadialChart" data-colors='["#F0006B"]'></div>
+                    </div>
+                    <div>
+                        <p class="text-muted mb-0">Total Revenue</p>
+                        <h4 class="my-1">
+                            <span id="spanTotalRevenueCount">XX</span>
+                        </h4>
+                    </div>
+                    <p class="text-muted mt-3 mb-0" id="sectionRevenueCount"></p>
+
+                    <div class="justify-content-center text-center chart-spinner" style="display:none">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 col-xl-8 mt-2">
+            <div class="card">
+                <div class="card-body">
+                    <div>
+                        <p class="text-muted mb-0">New Members And Bookings In Past 30 Days</p>
+                    </div>
+                    <div id="newMembersAndBookingsLineChart" data-colors='["--bs-warning","--bs-primary"]'>
+                    </div>
+                    <div class="justify-content-center text-center chart-spinner" style="display:none">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 col-xl-4 mt-2">
+            <div class="card">
+                <div class="card-body">
+                    <div class="">
+                        <p class="text-muted mb-0">Customer Bookings</p>
+                    </div>
+                    <div id="customerBookingsPieChart" data-colors='["--bs-warning","--bs-primary"]'>
+                    </div>
+
+                    <div class="justify-content-center text-center chart-spinner" style="display:none">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+  @*    <script src="~/js/dashboard/radailChart.js"></script> 
+    <script src="~/js/dashboard/getTotalBookingsRadial.js"></script>
+   <script src="~/js/dashboard/getTotalRevenueRadial.js"></script>
+    <script src="~/js/dashboard/getTotalUserRadial.js"></script> *@
+    <script src="~/js/dashboard/getCustomerBookingPieChart.js"></script>
+    @* <script src="~/js/dashboard/getCustomerAndBookingLineChart.js"></script> *@
+
+    <script>
+    $(document).ready(function () {
+        loadTotalBookingRadialChart();
+        loadTotalUsersRadialChart();
+        loadTotalRevenueRadialChart();
+    });
+
+
+    function loadTotalBookingRadialChart() {
+        $(".chart-spinner").show();
+
+        $.ajax({
+            url: "/Dashboard/GetTotalBookingRadialChartData",
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                document.querySelector("#spanTotalBookingCount").innerHTML = data.totalCount;
+
+                var sectionCurrentCount = document.createElement("span");
+                if (data.hasRatioIncreased) {
+                    sectionCurrentCount.className = "text-success me-1";
+                    sectionCurrentCount.innerHTML = '<i class="bi bi-arrow-up-right-circle me-1"></i> <span> ' + data.countInCurrentMonth + '</span>';
+                }
+                else {
+                    sectionCurrentCount.className = "text-danger me-1";
+                    sectionCurrentCount.innerHTML = '<i class="bi bi-arrow-down-right-circle me-1"></i> <span> ' + data.countInCurrentMonth + '</span>';
+            }
+
+            document.querySelector("#sectionBookingCount").append(sectionCurrentCount);
+            document.querySelector("#sectionBookingCount").append("since last month");
+
+            loadRadialBarChart("totalBookingsRadialChart", data);
+
+            $(".chart-spinner").hide();
+        }
+    });
+}
+
+// *******************************************USERS*********************************
+
+    function loadTotalUsersRadialChart() {
+        $(".chart-spinner").show();
+
+        $.ajax({
+            url: "/Dashboard/GetRegisteredUserChartData",
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                document.querySelector("#spanTotalUserCount").innerHTML = data.totalCount;
+
+                var sectionCurrentCount = document.createElement("span");
+                if (data.hasRatioIncreased) {
+                    sectionCurrentCount.className = "text-success me-1";
+                    sectionCurrentCount.innerHTML = '<i class="bi bi-arrow-up-right-circle me-1"></i> <span> ' + data.countInCurrentMonth + '</span>';
+                }
+                else {
+                    sectionCurrentCount.className = "text-danger me-1";
+                    sectionCurrentCount.innerHTML = '<i class="bi bi-arrow-down-right-circle me-1"></i> <span> ' + data.countInCurrentMonth + '</span>';
+            }
+
+                    document.querySelector("#sectionUserCount").append(sectionCurrentCount);
+                    document.querySelector("#sectionUserCount").append("since last month");
+
+                    loadRadialBarChart("totalUserRadialChart", data);
+
+            $(".chart-spinner").hide();
+        }
+    });
+}
+
+        // *******************************************Revenue*********************************
+
+    function loadTotalRevenueRadialChart() {
+    $(".chart-spinner").show();
+
+    $.ajax({
+        url: "/Dashboard/GetRevenueChartData",
+        type: 'GET',
+        dataType: 'json',
+        success: function (data) {
+                    document.querySelector("#spanTotalRevenueCount").innerHTML = data.totalCount;
+
+            var sectionCurrentCount = document.createElement("span");
+            if (data.hasRatioIncreased) {
+                sectionCurrentCount.className = "text-success me-1";
+                sectionCurrentCount.innerHTML = '<i class="bi bi-arrow-up-right-circle me-1"></i> <span> ' + data.countInCurrentMonth + '</span>';
+            }
+            else {
+                sectionCurrentCount.className = "text-danger me-1";
+                sectionCurrentCount.innerHTML = '<i class="bi bi-arrow-down-right-circle me-1"></i> <span> ' + data.countInCurrentMonth + '</span>';
+        }
+
+                document.querySelector("#sectionRevenueCount").append(sectionCurrentCount);
+                document.querySelector("#sectionRevenueCount").append("since last month");
+
+                loadRadialBarChart("totalRevenueRadialChart", data);
+
+        $(".chart-spinner").hide();
+    }
+});
+}
+
+function loadRadialBarChart(id, data) {
+    var chartColors = getChartColorsArray(id);
+    var options = {
+        fill: {
+            colors: chartColors
+        },
+        chart: {
+            height: 90,
+            width: 90,
+            type: "radialBar",
+            sparkline: {
+                enabled: true
+            },
+            offsetY: -10,
+        },
+        series: data.series,
+        plotOptions: {
+            radialBar: {
+                dataLabels: {
+                    value: {
+                        offsetY: -10,
+                        color: chartColors[0],
+                    }
+                }
+            }
+        },
+        labels: [""]
+    };
+    var chart = new ApexCharts(document.querySelector("#" + id), options);
+    chart.render();
+
+}
+
+
+function getChartColorsArray(id) {
+    if (document.getElementById(id) !== null) {
+        var colors = document.getElementById(id).getAttribute("data-colors");
+        if (colors) {
+            colors = JSON.parse(colors);
+            return colors.map(function (value) {
+                var newValue = value.replace(" ", "");
+                if (newValue.indexOf(",") === -1) {
+                    var color = getComputedStyle(document.documentElement).getPropertyValue(newValue);
+                    if (color) return color;
+                    else return newValue;
+                }
+            });
+        }
+
+    }
+}
+    </script>
+}

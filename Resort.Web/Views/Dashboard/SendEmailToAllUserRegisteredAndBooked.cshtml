@@ -1,0 +1,83 @@
+﻿@model SendEmailsVM
+
+<div class="container">
+    <h6>Select Emails to Send</h6>
+<form id="emailForm" asp-action="SendEmailToAllUserRegisteredAndBooked" asp-controller="Dashboard" class="form-control-lg">
+     
+    <div class="row">
+            <div class="col-6">
+                <ul>
+        @foreach (var email in Model.CustomerEmailsSelected)
+        { 
+        <li>
+            <label>
+                <input type="checkbox" name="selectedEmails" value="@email?.Email?.ToString()" checked> @email?.Name.ToString()               
+            </label>
+        </li>
+        }
+        <li>
+            <label>
+                    <input type="checkbox" name="selectedEmails" value="Mhmd.Abqader@outlook.com" checked> OurTestEmail@Resort.com
+            </label>
+        </li>
+        <br />      
+            
+    </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-6">
+                <label asp-for="Subject" class="form-label"></label>
+                <input id="w3review" asp-for="Subject" class="form-control shadow" />
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-6">
+                <label asp-for="Body" class="form-label"> Body Message</label>
+                <textarea id="w3review" asp-for="Body" rows="5" cols="20" class="form-control shadow ">
+                </textarea>
+                
+            </div>
+        </div>
+    <hr />
+    <button type="submit" class="btn btn-outline-success" @* onclick="sendSelectedEmails()" *@>Send Selected Emails</button>
+        <a asp-action="AdminDashboradIndex" asp-controller="Dashboard" class="btn btn-outline-danger">Cancel</a>
+</form>
+    
+    
+</div>
+@section Scripts{
+<script>
+    function sendSelectedEmails() {
+        const selectedEmails = [];
+        const checkboxes = document.querySelectorAll('input[name="selectedEmails"]:checked');
+
+        checkboxes.forEach(checkbox => {
+            selectedEmails.push(checkbox.value);
+        });
+
+        if (selectedEmails.length === 0) {
+            alert("Please select at least one email.");
+            return;
+        }
+
+        // Send the selected emails to the server
+        fetch('/send-emails', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ emails: selectedEmails }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to send emails.');
+        });
+    }
+</script>
+}

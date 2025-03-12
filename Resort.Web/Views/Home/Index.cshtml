@@ -1,8 +1,257 @@
-﻿@{
+﻿@model Resort.Web.ViewModels.HomeVM
+@{
     ViewData["Title"] = "Home Page";
 }
+<div class="row">
+    <div style="text-align:left" class="col-5">
+        @if (!User.Identity.IsAuthenticated) { 
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+
+            <span style="color:darkred">Use this Account to see Admin functionality </span><br />
+            <span>AdminUser@Resort.com</span> <br />
+            <span>Admin123!</span>    
+
+        }
+    </div>
+    <div class="col-4">
+    </div>
+   @*  <div class="col-3">
+
+
+      
+            @if (!User.Identity.IsAuthenticated)
+            {
+            <button class="btn btn-outline-danger offset-8" onclick="MustLogin(event)">Live Chat</button>
+            }
+            else
+        {
+              <div id="chatContainer">
+
+                @await Html.PartialAsync("_ChatPagePartial")
+			
+				<button id="toggleChat" class="btn btn-outline-danger offset-8">Live Chat</button>
+			  </div>
+            }
+
+		
+	</div> *@
+
 </div>
+<br />
+<hr />
+<div>
+    <div id="carouselExampleIndicators" class="carousel slide">
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
+            <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+        </div>
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <img src="~/images/slide2.jpg" class="d-block w-100" alt="...">
+            </div>
+            <div class="carousel-item">
+                <img src="~/images/slide1.jpg" class="d-block w-100" alt="...">
+            </div>
+            <div class="carousel-item">
+                <img src="~/images/slide2.jpg" class="d-block w-100" alt="...">
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
+    </div>
+    <form method="post" asp-action="CheckVillaAvailability">
+        <div class="row p-0 mx-0 py-4">
+
+            <div class="col-12 col-md-5  offset-md-1 pl-2  pr-2 pr-md-0">
+                <div class="form-group">
+                    <label>Check In Date</label>
+                    <input asp-for="CheckInDate" type="date" class="form-control" />
+                </div>
+            </div>
+
+            <div class="col-8 col-md-3 pl-2 pr-2">
+                <div class="form-group">
+                    <label>No. of Nights</label>
+                    <select class="form-select" asp-for="NoOfNights">
+                        @for (var i = 1; i <=10; i++)
+                        {
+                            <option value="@i">@i</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="col-4 col-md-3 pt-4 pr-2">
+                <div class="form-group">
+                    <button type="button" onclick="LoadVillaList_by_Ajax_PartilView()" class="btn btn-success btn-block">
+                        <i class="bi bi-search"></i>  &nbsp; Check Availability
+                    </button>
+
+                </div>
+            </div>
+
+        </div>
+        <div class="post_submitting">
+
+        </div>
+        <partial name="_VillaList" model="Model" />
+    </form>
+</div>
+
+
+@section Scripts {
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+    <script src="~/microsoft/signalr/dist/browser/signalr.js"></script>
+    <script>
+        function MustLogin(ev){
+                    alert('please, Login to chat with customer service');
+                   return false;
+        }
+     
+            const chatContainer = document.getElementById("chatContainer");
+             chatContainer.style.display = 'none';
+
+         document.getElementById("toggleChat").addEventListener("click", () => {
+             const chatContainer = document.getElementById("chatContainer");
+             chatContainer.style.display = chatContainer.style.display === "none" ? "block" : "none";
+             document.getElementById('messagesList').innerHTML = '';
+             document.getElementById("toggleChat").style.display = 'none';
+         });
+
+         document.getElementById("canc").addEventListener("click", event => {
+              //     const name = document.getElementById("userInput").value;
+              // const message = document.getElementById("messageInput").value;
+              //     con.invoke("SendMessage", name, message).catch(err => console.error(err.toString()));
+            var res=  confirm("are sure to close chat?!");
+            if(res)
+            {
+                 const chatContainer = document.getElementById("chatContainer");
+             chatContainer.style.display =  "none";
+              document.getElementById("toggleChat").style.display = 'block';
+            }
+            else{
+                event.preventDefault();
+                }
+             });
+         // define connection
+         //name = prompt("Enter ur Name");
+         con = new signalR.HubConnectionBuilder().withUrl("/ChatPage").build();
+
+         // start connection
+
+         con.start().catch(err => console.error(err.toString()));
+
+         // define callback func
+
+
+             con.on("myNewMessage", (name, message) => {
+             const li = document.createElement("li");
+                 li.textContent = `${name}: ${message}`;
+             document.getElementById("messagesList").appendChild(li);
+             });
+
+
+         // con.on("myNewMessage",function(n, m){
+         // $("ul").append("<li>"+ n + " : " + m + "</li>");
+         // });
+
+
+         // test demo
+         // con.on("newMember",function(n, gName){
+         // $("ul").append("<li style='color:red'>"+ n + " joined to group : " + gName + "</li>");
+         // });
+
+         // con.on("newMessageGroup",function(n,msg, gName){
+         // $("ul").append("<li style='color:blue'>"+ n + " from group : " + gName +" : =>>>  "+ msg+ "</li>");
+         // });
+
+
+         // define func to consume server
+    
+
+             document.getElementById("sendButton").addEventListener("click", event => {
+                 const name = document.getElementById("userInput").value;
+             const message = document.getElementById("messageInput").value;
+             if(name === '' || message === ''  ){
+
+                 document.getElementById("userInput").style.background ='#f1807e';
+                document.getElementById("messageInput").style.background ='#f1807e'; event.preventDefault();
+             }
+             else if(message === '' ){
+                 document.getElementById("messageInput").style.background ='#f1807e'; event.preventDefault();
+             }
+             else
+             { 
+                document.getElementById("userInput").style.background ='#ddd';
+                document.getElementById("userInput").disabled = true;
+                document.getElementById("messageInput").style.background ='white';
+                 con.invoke("SendMessage", name, message).catch(err => console.error(err.toString()));
+                 event.preventDefault();
+             }
+               
+            });
+
+         // test demo
+         // function sendMessagesFunc(){
+         //         //const name = document.getElementById("userInput").value;
+         //             con.invoke("SendMessage",name, $("#txt").val()); // SendMessage is the function name that is inside chathub class
+         // }
+
+         // function joinGroupFunc(){
+         // con.invoke("joinGroup",  $("#gtxt").val(), name); // joinGroup is the function name that is inside chathub class
+         // }
+
+         // function sendToGroupFunc(){
+         // con.invoke("SendToGroup",name, $("#txt").val(), $("#gtxt").val() ); // joinGroup is the function name that is inside chathub class
+         // }
+
+        function LoadVillaList_by_Ajax_PartilView()
+        {
+            let dateIn = $("#CheckInDate").val();
+            let nights = $("#NoOfNights").val();
+            let url = "/Home/CheckVillaAvailability?checkInDate="+ dateIn + "&nights=" + nights;
+            $.ajax({
+            url : url,
+            method : "GET",
+              beforeSend:function(){
+            // $(".post_submitting").show().html("<center><img src='images/loading.gif'/></center>");
+            $(".post_submitting").show().html("<center><h5 style='color:green'>Wait Loading...!</h5> </center>");
+            },
+            success:function(data)
+            {
+                $("#VillasList").html(data);
+                 $(".post_submitting").fadeOut(2000);
+            },
+            });
+
+
+            // another easy way to call 
+            
+            // var object = {
+            // checkInDate :$("#CheckInDate").val(),
+            // nights : $("#NoOfNights").val()
+            // }
+
+            // $.ajax({
+            // url : "@Url.Action("CheckVillaAvailability", "Home")",
+            // data: object,
+            // method : "GET",
+         
+            // success:function(data)
+            // {
+            //      $("#VillasList").empty();
+            //     $("#VillasList").html(data);                
+            // },
+            // });
+
+        } 
+
+    </script>
+}
