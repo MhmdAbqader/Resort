@@ -1,0 +1,76 @@
+﻿ @model string 
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmation Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f9fc;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+        }
+
+            .header h1 {
+                color: #333;
+            }
+
+        .content {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #555;
+        }
+
+        .button {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 12px 24px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 13px;
+            color: #aaa;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to @{Model.ToString();}  </h1>
+        </div>
+        <div class="content">
+       
+            <p style="color:cornflowerblue">Thanks for signing up! Your account has been successfully created😊.</p>
+            <p>To get started, please confirm your email address by clicking the link inside it..</p>
+            <p>If you didn’t create this account, you can safely ignore this email.</p>
+            <p>Mhmd Abqader SE🧑‍💻, <br />The IT Team</p>
+        </div>
+        <div class="footer">
+            &copy; 2025 [Mhmd Abqader] · <a href="#" style="color:#aaa;">Privacy Policy</a>
+        </div>
+    </div>
+</body>
+</html>
+

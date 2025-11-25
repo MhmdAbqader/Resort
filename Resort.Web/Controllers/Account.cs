@@ -1,15 +1,19 @@
-﻿using System.Security.Claims;
-using System.Text;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages;
 using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages.Manage;
+using Microsoft.Win32;
+using Org.BouncyCastle.Bcpg.OpenPgp;
 using Resort.Application.Repository;
 using Resort.Application.Services;
 using Resort.Application.Utility;
 using Resort.Domain.Models;
 using Resort.Web.ViewModels;
+using Stripe;
+using System.Security.Claims;
+using System.Text;
 
 namespace Resort.Web.Controllers
 {
@@ -20,18 +24,20 @@ namespace Resort.Web.Controllers
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly IEmailService _emailService;
+        private readonly ILogger<AccountController> _logger;
 
         public Account(IUnitOfWork unitOfWork,
             UserManager<ApplicationUser> userManager,
             RoleManager<IdentityRole> roleManager,
             SignInManager<ApplicationUser> signInManager,
-            IEmailService emailService)
+            IEmailService emailService, ILogger<AccountController> logger)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
             _roleManager = roleManager;
             _signInManager = signInManager;
             _emailService = emailService;
+            _logger = logger;
         }
    
 
@@ -61,23 +67,46 @@ namespace Resort.Web.Controllers
                     PhoneNumber = register.PhoneNumber,
                     NormalizedEmail = register.Email.ToUpper(),
                     CreatedAt = DateTime.Now,
-                    EmailConfirmed = true,
+                    //EmailConfirmed = true,
                 };
 
                 var result = await _userManager.CreateAsync(user,register.Password);
                 if (result.Succeeded)
                 {
+
+                    // Fs - generate token for confirmation mail
+                    // Ss - create a callbackurl for actionConfirmation and send it in mail 
+                    // Ts - forward user to the page to thank him for signing up and demand to get back to
+                    // open his mail and press link to ensure that he already confirmed the mail..
+
+                    string token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                    //string callbackUUrl = string.Empty;
+                    string callbackUrlConfirmationLink = string.Empty;
+                    if (register.RedirectUrl is null)
+                        callbackUrlConfirmationLink = Url.Action("ConfirmMyEmail","Account",new {userId = user.Id, token = token },Request.Scheme);
+                    else
+                        callbackUrlConfirmationLink = Url.Action("ConfirmMyEmail", "Account", new { userId = user.Id, token = token, returnUlr = register.RedirectUrl }, Request.Scheme);
+                    await _emailService.SendOneEmailAsync(user.Email, "Confirm your email",
+                           $"Please confirm your account by clicking this link: <a href='{callbackUrlConfirmationLink}'>link</a>");
+
+                    _logger.LogInformation(callbackUrlConfirmationLink);
+                    _logger.Log(logLevel: LogLevel.Warning, callbackUrlConfirmationLink);
+
+
                     if (register.Role is not null)
                         await _userManager.AddToRoleAsync(user, register.Role);
                     else
                         await _userManager.AddToRoleAsync(user, SD.CustomerRole);
-
+    
                     await _signInManager.SignInAsync(user, isPersistent: false);
 
-                    if (register.RedirectUrl is null)
-                        return RedirectToAction("Index", "Home");
-                    else
-                        return LocalRedirect(register.RedirectUrl);                        
+                    TempData["FullName"] = user.Name;
+                    return RedirectToAction("RegisterSuccessANDConfirmationMailAddress", "Account");
+                    //if (register.RedirectUrl is null)
+                    //    return RedirectToAction("Index", "Home");
+                    //else
+                    //    return LocalRedirect(register.RedirectUrl);                        
                 }
 
                 foreach (var err in result.Errors)
@@ -92,6 +121,32 @@ namespace Resort.Web.Controllers
             return View(registerModel);
         }
 
+        public async Task<IActionResult> ConfirmMyEmail(string userId, string token, string returnUrl ="/") 
+        {
+            if (userId == null || token == null)
+                return RedirectToAction("Index", "Home");
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return NotFound($"Unable to load user with ID '{userId}'.");
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (result.Succeeded)
+                return LocalRedirect(returnUrl);
+            else
+                return View("Error");
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> RegisterSuccessANDConfirmationMailAddress()
+        {
+            string name = string.Empty;
+            if (TempData["FullName"].ToString() is not null)
+                 name = TempData["FullName"].ToString();
+
+            return View(nameof(RegisterSuccessANDConfirmationMailAddress),name);
+        }
 
         public IActionResult Login(string? returnUrl = null)
         {
@@ -113,7 +168,9 @@ namespace Resort.Web.Controllers
         {
             if (ModelState.IsValid)
             {
-               var result = await _signInManager
+              //  var user = await _userManager.FindByEmailAsync(loginModel.Email);
+              
+                var result = await _signInManager
                     .PasswordSignInAsync(loginModel.Email,loginModel.Password,loginModel.RememberMe,false);
                 if (result.Succeeded)
                 {
@@ -124,7 +181,13 @@ namespace Resort.Web.Controllers
                     // also, this is working well but this is the best practice
                     //var user = _unitOfWork.ApplicationUserRepository.GetById("give userId from principleClaims to get current user");  
                     ApplicationUser? user = await _userManager.FindByEmailAsync(loginModel.Email);
-                    if (await _userManager.IsInRoleAsync(user,SD.AdminRole)) 
+                    if (user != null && !await _userManager.IsEmailConfirmedAsync(user))
+                    {
+                        ModelState.AddModelError(string.Empty, "You must open your mail then confirm email.");
+                        return View(loginModel);
+                    }
+
+                    else if (await _userManager.IsInRoleAsync(user, SD.AdminRole))
                     {
                         return RedirectToAction("AdminDashboradIndex", "Dashboard");
                     }
@@ -154,6 +217,7 @@ namespace Resort.Web.Controllers
         {           
             return View();
         }
+
         [HttpGet]
         public async Task<IActionResult> ChangePassword() 
         {
@@ -187,6 +251,9 @@ namespace Resort.Web.Controllers
             TempData["error"] = "Error occued, try again after a few minutes!";
             return View(changePasswordVM);
         }
+
+
+
 
         [HttpGet]
         public async Task<IActionResult> ForgotPassword()

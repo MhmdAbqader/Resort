@@ -30,8 +30,8 @@ namespace Resort.Infrastructure.Emails
             int smtpPort = 587;   //587 Default SMTP port (may vary)
             string smtpUsername = "eyad80701@gmail.com";
             //var smtpPassword = "ixFCIxx412_ixxx0";
-            //string smtpPassword = "rvpa gahb fhdd qfvo";
-            string smtpPassword = "zefr iojc ybjs sxfd";
+            //string smtpPassword = "rvpa gahb fhdd qfvo"; //old one
+            string smtpPassword = "qnbq kjji tnrr ejgn"; // new one 24/07/2025
             try
             {
 
@@ -41,7 +41,7 @@ namespace Resort.Infrastructure.Emails
                 {
 
                     message.To.Add(new MailboxAddress("Our Dear Guest", toEmail));
-                    message.Subject = subject;
+                    message.Subject = subject == null? "" :subject;
 
                     message.Body = new TextPart("html")
                     {
@@ -74,7 +74,7 @@ namespace Resort.Infrastructure.Emails
             int smtpPort = 587;   //587 Default SMTP port (may vary)
             string smtpUsername = "eyad80701@gmail.com";
             //var smtpPassword = "ixFCIxx412_ixxx0";
-            string smtpPassword = "rvpa gahb fhdd qfvo";
+            string smtpPassword = "fgfk jlgx riql cnwz"; // 04/08/2025 the newest app password
             try
             {
 

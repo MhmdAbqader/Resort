@@ -20,7 +20,7 @@ namespace Resort.Web
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            // Add services to the container...
             builder.Services.AddControllersWithViews();
 
             // add signalR package
@@ -29,15 +29,23 @@ namespace Resort.Web
             builder.Services.AddRazorPages().AddRazorRuntimeCompilation();
             builder.Services.AddDbContext<ApplicationDbContext>(options => 
             options.UseSqlServer(
-                builder.Configuration.GetConnectionString("_cn")
+                builder.Configuration.GetConnectionString("_cnLocal")
                 ));
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
 
-           //  builder.Services.AddScoped<IVillaRepository, VillaRepository>();
-          
-           builder.Services.AddScoped<IVillaService, VillaService>();
+            builder.Services.Configure<IdentityOptions>(options =>
+            {
+             //   options.SignIn.RequireConfirmedEmail = true;
+            });
+
+            // i added this service AddDefaultTokenProviders to make emailConfirmation works well.
+
+
+            //  builder.Services.AddScoped<IVillaRepository, VillaRepository>();
+
+            builder.Services.AddScoped<IVillaService, VillaService>();
            builder.Services.AddScoped<IVillaNumberService, VillaNumberService>();
            builder.Services.AddScoped<IAmenityService, AmenityService>();
            builder.Services.AddScoped<IBookingService, BookingService>();
