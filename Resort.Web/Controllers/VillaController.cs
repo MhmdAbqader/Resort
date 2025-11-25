@@ -48,6 +48,7 @@ namespace Resort.Web.Controllers
             }
             if (ModelState.IsValid) 
             {
+                 villa.CreatedDate = DateTime.Now;  
                 _villaService.CreateVilla(villa);
                 @TempData["success"] = "The Villa has been created successfully! :)";
                 return RedirectToAction("Index","Villa");
